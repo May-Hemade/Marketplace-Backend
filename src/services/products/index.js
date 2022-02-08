@@ -20,11 +20,14 @@ productsRouter.get("/", async (req, res, next) => {
     let result = null
     if (req.query && req.query.category) {
       result = await pool.query(
-        `SELECT * from products WHERE product_category=$1;`,
+        `SELECT * from products 
+        JOIN reviews ON reviews.product_id=products.product_id
+        WHERE product_category=$1;`,
         [req.query.category]
       )
     } else {
-      result = await pool.query(`SELECT * from products;`)
+      result = await pool.query(`SELECT * from products 
+      JOIN reviews ON reviews.product_id=products.product_id;`)
     }
     res.send(result.rows)
   } catch (error) {

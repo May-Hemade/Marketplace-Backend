@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS
         product_id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
         product_name VARCHAR(100) NOT NULL,
         product_description VARCHAR(500) NOT NULL,
-        product_price VARCHAR(100) NOT NULL,
+        product_price INTEGER NOT NULL,
         product_category VARCHAR(100) NOT NULL,
         created_at TIMESTAMPTZ DEFAULT NOW(),
         updated_at TIMESTAMPTZ DEFAULT NOW()
