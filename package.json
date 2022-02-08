@@ -1,12 +1,13 @@
 {
-  "name": "M5D5",
+  "name": "Marketplace-Backend",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon -e js ./src/server.js"
+    "prestart": "npm run create-tables",
+    "dev": "nodemon -e js ./src/server.js",
+    "create-tables": "node -r dotenv/config ./src/utils/db/create-tables.js"
   },
   "repository": {
     "type": "git",
@@ -15,10 +16,6 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/CarlosGozalbes/M5D5/issues"
-  },
-  "homepage": "https://github.com/CarlosGozalbes/M5D5#readme",
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.17.2",
@@ -27,9 +24,11 @@
     "fs-extra": "^10.0.0",
     "http-errors": "^2.0.0",
     "multer": "^1.4.4",
+    "pg": "^8.7.3",
     "uniqid": "^5.4.0"
   },
   "devDependencies": {
-    "nodemon": "^2.0.15"
+    "nodemon": "^2.0.15",
+    "dotenv": "^16.0.0"
   }
 }

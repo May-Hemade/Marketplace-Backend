@@ -7,9 +7,9 @@ import {
   notFoundHandler,
   genericErrorHandler,
 } from "./errorHandlers.js";
-import createHttpError from "http-errors";
 import cors from "cors";
 import { join } from "path";
+import reviewsRouter from "./services/reviews/index.js";
 
 const server = express();
 
@@ -25,8 +25,7 @@ server.use(express.static(publicFolderPath));
 //ENDPOINTS
 
 server.use("/products", productsRouter);
-
-//
+server.use("/reviews", reviewsRouter);
 
 server.use(badRequestHandler);
 server.use(unauthorizedHandler);
