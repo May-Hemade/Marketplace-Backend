@@ -1,10 +1,9 @@
 import express from "express"
 import pool from "../../utils/db/connect.js"
 
-import uniqid from "uniqid"
 import createHttpError from "http-errors"
 import { validationResult } from "express-validator"
-import { newProductValidation, newReviewValidation } from "./validation.js"
+import { newProductValidation} from "./validation.js"
 import multer from "multer"
 import {
   getProducts,
@@ -155,7 +154,7 @@ productsRouter.post(
   }
 )
 
-reviewsRouter.get("/:productId/reviews", async (req, res, next) => {
+productsRouter.get("/:productId/reviews", async (req, res, next) => {
   try {
     const productId = req.params.productId
 
