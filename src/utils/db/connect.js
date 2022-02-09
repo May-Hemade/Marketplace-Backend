@@ -1,6 +1,6 @@
 import Sequelize from "sequelize";
 
-const { POSTGRES_URI } = process.env;
+const {POSTGRES_URI } = process.env;
 
 const sequelize = new Sequelize(POSTGRES_URI, {
   dialect: "postgres",

@@ -2,7 +2,7 @@ import { DataTypes } from "sequelize"
 
 import sequelize from "../../utils/db/connect.js"
 
-import Sequelize from "sequelize"
+import { Sequelize } from "sequelize"
 
 import Product from "../products/model.js"
 

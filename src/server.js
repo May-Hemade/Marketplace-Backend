@@ -1,9 +1,11 @@
 import express from "express";
 
-import productsRouter from "./services/products/index.js";
+//import productsRouter from "./services/products/index.js";
 
-import reviewsRouter from "./services/reviews/index.js";
+// import reviewsRouter from "./services/reviews/index.js";
 import { authenticateDatabase } from "./utils/db/connect.js"
+
+import "./services/products/model.js"
 
 const server = express();
 
@@ -18,8 +20,8 @@ server.use(express.json());
 // server.use(express.static(publicFolderPath));
 //ENDPOINTS
 
-   server.use("/products", productsRouter);
-    server.use("/reviews", reviewsRouter);
+  // server.use("/products", productsRouter);
+    //server.use("/reviews", reviewsRouter);
 
 // server.use(badRequestHandler);
 // server.use(unauthorizedHandler);

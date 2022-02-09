@@ -1,118 +1,68 @@
-import express from "express"
-import pool from "../../utils/db/connect.js"
+import { Router } from "express";
+import Review from "./models.js";
 
-import uniqid from "uniqid"
-import createHttpError from "http-errors"
-import { validationResult } from "express-validator"
-import { newReviewValidation } from "./validation.js"
-import {
-  getProducts,
-  saveProductsImageUrl,
-  writeProducts,
-  productsPublicFolderPath,
-} from "../../lib/fs-tools.js"
+import Product from "../products/model.js";
 
-const reviewsRouter = express.Router()
+const reviewsRouter = Router();
 
 reviewsRouter.get("/", async (req, res, next) => {
   try {
-    const result = await pool.query(
-      `SELECT * FROM reviews`
-    )
-
-    res.send(result.rows)
+    const reviews = await Review.findAll({
+      include: [Product],
+    });
+    res.send(reviews);
   } catch (error) {
-    next(error)
+    res.status(500).send({ message: error.message });
   }
-})
+});
 
-reviewsRouter.get("/:reviewId", async (req, res, next) => {
+
+
+reviewsRouter.get("/:id", async (req, res, next) => {
   try {
-    const result = await pool.query(
-      `SELECT * FROM reviews 
-      WHERE review_id=$1`,
-      [req.params.reviewId]
-    )
-
-    if(result.rowCount > 0) {
-      res.send(result.rows[0])
+    const singleReview = await Review.findByPk(req.params.id);
+    if (singleReview) {
+      res.send(singleReview);
     } else {
-      res.status(404).send({ message: "Review not found." })
+      res.status(404).send({ message: "No such review" });
     }
   } catch (error) {
-    next(error)
+    res.status(500).send({ message: error.message });
   }
-})
+});
 
-reviewsRouter.post("/",
-  newReviewValidation,
-  async (req, res, next) => {
-    try {
-      const errorsList = validationResult(req)
-      if (errorsList.isEmpty()) {
-        const result = await pool.query(
-          `INSERT INTO reviews(comment, rate, product_id) 
-          VALUES ($1, $2, $3) RETURNING *;`,
-          [
-            req.body.comment,
-            req.body.rate,
-            req.body.product_id
-          ]
-        )
-        res.send(result.rows[0])
-      } else {
-        next(
-          createHttpError(400, "Some errors occured in request body!", {
-            errorsList,
-          })
-        )
-      }
-    } catch (error) {
-      next(error)
+reviewsRouter.post("/", async (req, res, next) => {
+  try {
+    const newReview = await Review.create(req.body);
+    res.send(newReview);
+  } catch (error) {
+    res.status(500).send({ error: error.message });
+  }
+});
+
+reviewsRouter.put("/:id", async (req, res, next) => {
+  try {
+    const [success, updatedReview] = await Review.update(req.body, {
+      where: { id: req.params.id },
+      returning: true,
+    });
+    if (success) {
+      res.send(updatedReview);
+    } else {
+      res.status(404).send({ message: "no such reveiw" });
     }
+  } catch (error) {
+    res.status(500).send({ message: error.message });
   }
-)
+});
 
-reviewsRouter.put("/reviewId",
-  newReviewValidation,
-  async (req, res, next) => {
-    try {
-      const errorsList = validationResult(req)
-      if (errorsList.isEmpty()) {
-        const result = await pool.query(
-          `UPDATE reviews SET comment=$1, rate=$2, product_id=$3) 
-          VALUES ($1, $2, $3) RETURNING *;`,
-          [
-            req.body.comment,
-            req.body.rate,
-            req.body.product_id
-          ]
-        )
-        res.send(result.rows[0])
-      } else {
-        next(
-          createHttpError(400, "Some errors occured in request body!", {
-            errorsList,
-          })
-        )
-      }
-    } catch (error) {
-      next(error)
-    }
+reviewsRouter.delete("/:id", async (req, res, next) => {
+  try {
+    await Review.destroy({ id: req.params.id });
+    res.status(204).send();
+  } catch (error) {
+    res.status(500).send({ message: error.message });
   }
-)
+});
 
-reviewsRouter.delete(
-  "/:reviewId", async (req, res, next) => {
-    try {
-      await pool.query(`DELETE FROM reviews WHERE review_id=$1;`, [
-        req.params.reviewId,
-      ])
-      res.status(204).send()
-    } catch (error) {
-      next(error)
-    }
-  }
-)
-
-export default reviewsRouter
+export default reviewsRouter;
