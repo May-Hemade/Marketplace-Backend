@@ -5,5 +5,5 @@ export const newProductValidation = [
   body("product_description").exists().withMessage("product_description is a mandatory field!"),
   body("product_category").exists().withMessage("product_category is a mandatory field!"),
   body("product_price").exists().withMessage("product_price is a mandatory field!"),
-  body("product_brand").exists().withMessage("product_brand is a mandatory field!"),
+  //body("product_brand").exists().withMessage("product_brand is a mandatory field!"),
 ];
