@@ -4,7 +4,7 @@ import sequelize from "../../utils/db/connect.js";
 
 import Sequelize from "sequelize";
 
-import Product from "./model.js";
+import Product from "../products/model.js";
 
 
 const Category = sequelize.define(
@@ -23,8 +23,6 @@ const Category = sequelize.define(
   },
   { underscored: true }
 );
-
-// through is the join table (3rd table)
 
 Category.belongsToMany(Product, { through: "product_categories" });
 Product.belongsToMany(Category, { through: "product_categories" });

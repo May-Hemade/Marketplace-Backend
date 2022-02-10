@@ -7,6 +7,7 @@ import reviewsRouter from "./services/reviews/index.js"
 import { authenticateDatabase } from "./utils/db/connect.js"
 
 import "./services/products/model.js"
+import categoryRouter from "./services/categories/index.js"
 
 const server = express()
 
@@ -17,6 +18,7 @@ server.use(express.json())
 server.use("/products", productsRouter)
 server.use("/reviews", reviewsRouter)
 server.use("/users", usersRouter)
+server.use("/categories", categoryRouter)
 
 server.listen(PORT, () => {
   authenticateDatabase()

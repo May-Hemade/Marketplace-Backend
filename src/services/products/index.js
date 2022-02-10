@@ -2,19 +2,21 @@ import { Router } from "express"
 import { Op } from "sequelize"
 import Review from "../reviews/model.js"
 import User from "../users/model.js"
-import Category from "./categories-model.js"
+import Category from "../categories/model.js"
 import Product from "./model.js"
 
 const productsRouter = Router()
 
 productsRouter.get("/", async (req, res, next) => {
   try {
+    const { offset = 0, limit = 3 } = req.query;
+    const totalProduct = await Product.count({});
     const products = await Product.findAll({
       include: [{model: Review, include:[User]}, Category],
       offset,
       limit,
     })
-    res.send(products)
+    res.send({ data: products, count: totalProduct })
   } catch (error) {
     res.status(500).send({ error: error.message })
   }
