@@ -1,4 +1,5 @@
 import { Router } from "express"
+import { Op } from "sequelize"
 import Product from "./model.js"
 
 const productsRouter = Router()
@@ -11,6 +12,32 @@ productsRouter.get("/", async (req, res, next) => {
     res.status(500).send({ error: error.message })
   }
 })
+
+productsRouter.get("/search", async (req, res, next) => {
+  try {
+    console.log({ query: req.query });
+    const products = await Product.findAll({
+      where: {
+        [Op.or]: [
+          {
+            productNAme: {
+              [Op.iLike]: `%${req.query.q}%`,
+            },
+          },
+          {
+            ProductDescription: {
+              [Op.iLike]: `%${req.query.q}%`,
+            },
+          },
+        ],
+      },
+      include: [Product],
+    });
+    res.send(products);
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
+});
 
 productsRouter.get("/:id", async (req, res, next) => {
   try {
@@ -62,4 +89,15 @@ productsRouter.delete("/:id", async (req, res, next) => {
     res.status(500).send({ message: error.message })
   }
 })
+
+
+  productsRouter.get ("/",  async ( req, res, next) => {
+    try {
+      
+    } catch (error) {
+      
+    }
+  } )
+
+
 export default productsRouter

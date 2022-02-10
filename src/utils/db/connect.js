@@ -6,6 +6,8 @@ const sequelize = new Sequelize(POSTGRES_URI, {
   dialect: "postgres",
 });
 
+
+
 export const authenticateDatabase = async () => {
   try {
     await sequelize.authenticate({ logging: false });
