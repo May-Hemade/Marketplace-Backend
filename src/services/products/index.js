@@ -1,5 +1,5 @@
 import { Router } from "express"
-import { Op } from "sequelize"
+import sequelize,{ Op } from "sequelize"
 import Review from "../reviews/model.js"
 import User from "../users/model.js"
 import Category from "../categories/model.js"
@@ -48,7 +48,29 @@ productsRouter.get("/search", async (req, res, next) => {
     res.status(500).send({ message: error.message });
   }
 });
-
+productsRouter.get("/stats", async (req, res, next) => {
+  try {
+    console.log("here?")
+    const stats = await Review.findAll({
+     
+      attributes: [
+        [
+          sequelize.cast(
+            // cast function converts datatype
+            sequelize.fn("count", sequelize.col("product_product_id")), // SELECT COUNT(blog_id) AS total_comments
+            "integer"
+          ),
+          "numberOfReviews",
+        ],
+      ],
+      group: ["product_product_id","product.product_id"],
+      include: [ {model:Product,attributes:["productName"],include:[{model:Review,attributes:["comment"]}]}], // <-- nested include
+    });
+    res.send(stats);
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
+});
 
 
 productsRouter.post("/", async (req, res, next) => {
@@ -114,28 +136,7 @@ productsRouter.delete("/:id", async (req, res, next) => {
   }
 })
 
-productsRouter.get("/stats", async (req, res, next) => {
-  try {
-    const stats = await Review.findAll({
-     
-      attributes: [
-        [
-          sequelize.cast(
-            // cast function converts datatype
-            sequelize.fn("count", sequelize.col("review_id")), // SELECT COUNT(blog_id) AS total_comments
-            "integer"
-          ),
-          "numberOfReviews",
-        ],
-      ],
-      group: ["product_id", "product.id", "product.review.id"],
-      include: [{ model: Product, include: [Review] }], // <-- nested include
-    });
-    res.send(stats);
-  } catch (error) {
-    res.status(500).send({ message: error.message });
-  }
-});
+
   
 
 export default productsRouter
