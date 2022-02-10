@@ -1,13 +1,7 @@
 import { DataTypes } from "sequelize";
-
 import sequelize from "../../utils/db/connect.js";
-
- 
-
 import Sequelize from "sequelize";
-const product = sequelize.define('products',{
 
-})
 
 const Product = sequelize.define(
   "product",
@@ -21,7 +15,6 @@ const Product = sequelize.define(
     productName: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
     },
     productDescription: {
       type: DataTypes.STRING,

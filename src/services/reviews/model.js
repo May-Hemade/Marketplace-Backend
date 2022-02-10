@@ -5,11 +5,12 @@ import sequelize from "../../utils/db/connect.js"
 import { Sequelize } from "sequelize"
 
 import Product from "../products/model.js"
+import User from "../users/model.js"
 
 const Review = sequelize.define(
   "review",
   {
-    ReviewId: {
+    reviewId: {
       type: DataTypes.UUID,
       defaultValue: Sequelize.UUIDV4,
       allowNull: false,
@@ -32,5 +33,6 @@ Product.hasMany(Review, {
 })
 
 Review.belongsTo(Product)
+Review.belongsTo(User)
 
 export default Review

@@ -1,20 +1,10 @@
 import { Router } from "express";
-import Review from "./models.js";
+import Review from "./model.js";
 
 import Product from "../products/model.js";
 
 const reviewsRouter = Router();
 
-reviewsRouter.get("/", async (req, res, next) => {
-  try {
-    const reviews = await Review.findAll({
-      include: [Product],
-    });
-    res.send(reviews);
-  } catch (error) {
-    res.status(500).send({ message: error.message });
-  }
-});
 
 
 
@@ -40,10 +30,22 @@ reviewsRouter.post("/", async (req, res, next) => {
   }
 });
 
+
+reviewsRouter.get("/", async (req, res, next) => {
+  try {
+    const reviews = await Review.findAll({
+      include: [Product],
+    });
+    res.send(reviews);
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
+});
+
 reviewsRouter.put("/:id", async (req, res, next) => {
   try {
     const [success, updatedReview] = await Review.update(req.body, {
-      where: { id: req.params.id },
+      where: { reviewId: req.params.id },
       returning: true,
     });
     if (success) {
@@ -58,7 +60,11 @@ reviewsRouter.put("/:id", async (req, res, next) => {
 
 reviewsRouter.delete("/:id", async (req, res, next) => {
   try {
-    await Review.destroy({ id: req.params.id });
+    await Review.destroy({ 
+      where: {
+      reviewId: req.params.id 
+      }
+    });
     res.status(204).send();
   } catch (error) {
     res.status(500).send({ message: error.message });
