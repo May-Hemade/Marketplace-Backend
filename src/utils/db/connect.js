@@ -10,7 +10,7 @@ if (process.env.REQUIRE_SSL === "true") {
   options.dialectOptions = {
     ssl: {
       require: true,
-      rejectUnauthorized: true,
+      rejectUnauthorized: false,
     },
   }
 }
