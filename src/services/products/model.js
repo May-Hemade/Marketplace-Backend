@@ -24,6 +24,14 @@ const Product = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: false,
     },
+    imageUrl: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: "https://i.pravatar.cc/300",
+      validate: {
+        isURL: true,
+      },
+    },
   },
   { underscored: true }
 )
