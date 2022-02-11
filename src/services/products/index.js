@@ -9,9 +9,10 @@ const productsRouter = Router()
 
 productsRouter.get("/", async (req, res, next) => {
   try {
-    const { offset = 0, limit = 3 } = req.query;
+    const { offset = 0, limit = 3, category= "" } = req.query;
     const totalProduct = await Product.count({});
     const products = await Product.findAll({
+      where:{},
       include: [{model: Review, include:[User]}, Category],
       offset,
       limit,
@@ -21,6 +22,8 @@ productsRouter.get("/", async (req, res, next) => {
     res.status(500).send({ error: error.message })
   }
 })
+
+
 
 productsRouter.get("/search", async (req, res, next) => {
   try {
