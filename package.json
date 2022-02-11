@@ -5,10 +5,9 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "prestart": "npm run create-tables",
+    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node ./src/server.js",
-    "dev": "nodemon -r dotenv/config ./src/server.js",
-    "create-tables": "node -r dotenv/config ./src/utils/db/create-tables.js"
+    "dev": "nodemon -r dotenv/config ./src/server.js"
   },
   "repository": {
     "type": "git",
