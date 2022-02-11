@@ -1,14 +1,8 @@
 import Sequelize from "sequelize"
 
-const { DATABASE_URL } = process.env
-
-// const sequelize = new Sequelize(DATABASE_URL, {
-//   dialect: "postgres",
-// });
-
 let options = {
-  port: process.env.PORT,
-  host: process.env.HOST,
+  port: process.env.PGPORT,
+  host: process.env.PGHOST,
   dialect: "postgres",
 }
 
@@ -22,9 +16,9 @@ if (process.env.REQUIRE_SSL === "true") {
 }
 
 const sequelize = new Sequelize(
-  process.env.DATABASE,
-  process.env.USER,
-  process.env.PASSWORD,
+  process.env.PGDATABASE,
+  process.env.PGUSER,
+  process.env.PGPASSWORD,
   options
 )
 
