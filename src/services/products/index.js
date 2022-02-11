@@ -1,176 +1,142 @@
-import express from "express"
-import pool from "../../utils/db/connect.js"
+import { Router } from "express"
+import sequelize,{ Op } from "sequelize"
+import Review from "../reviews/model.js"
+import User from "../users/model.js"
+import Category from "../categories/model.js"
+import Product from "./model.js"
 
-import createHttpError from "http-errors"
-import { validationResult } from "express-validator"
-import { newProductValidation} from "./validation.js"
-import multer from "multer"
-import {
-  getProducts,
-  saveProductsImageUrl,
-  writeProducts,
-  productsPublicFolderPath,
-} from "../../lib/fs-tools.js"
-
-// CRUD
-const productsRouter = express.Router()
+const productsRouter = Router()
 
 productsRouter.get("/", async (req, res, next) => {
   try {
-    let result = null
-    if (req.query && req.query.category) {
-      result = await pool.query(
-        `SELECT * from products 
-        JOIN reviews ON reviews.product_id=products.product_id
-        WHERE product_category=$1;`,
-        [req.query.category]
-      )
-    } else {
-      result = await pool.query(`SELECT * from products 
-      JOIN reviews ON reviews.product_id=products.product_id;`)
-    }
-    res.send(result.rows)
+    const { offset = 0, limit = 3 } = req.query;
+    const totalProduct = await Product.count({});
+    const products = await Product.findAll({
+      include: [{model: Review, include:[User]}, Category],
+      offset,
+      limit,
+    })
+    res.send({ data: products, count: totalProduct })
   } catch (error) {
-    next(error)
+    res.status(500).send({ error: error.message })
   }
 })
 
-productsRouter.get("/:productId", async (req, res, next) => {
+productsRouter.get("/search", async (req, res, next) => {
   try {
-    const productId = req.params.productId
-
-    const result = await pool.query(
-      `SELECT * from products WHERE product_id=$1;`,
-      [productId]
-    )
-
-    if (result.rows[0]) {
-      res.send(result.rows)
-    } else {
-      res.status(404).send({ message: "No such product." })
-    }
+    console.log({ query: req.query });
+    const products = await Product.findAll({
+      where: {
+        [Op.or]: [
+          {
+            productName: {
+              [Op.iLike]: `%${req.query.q}%`,
+            },
+          },
+          {
+            productDescription: {
+              [Op.iLike]: `%${req.query.q}%`,
+            },
+          },
+        ],
+      },
+      include: [{model: Review, include:[User]}, Category],
+    });
+    res.send(products);
   } catch (error) {
-    next(error)
+    console.log(error)
+    res.status(500).send({ message: error.message });
   }
-})
-
-productsRouter.post("/", newProductValidation, async (req, res, next) => {
+});
+productsRouter.get("/stats", async (req, res, next) => {
   try {
-    const errorsList = validationResult(req)
-    if (errorsList.isEmpty()) {
-      const result = await pool.query(
-        `INSERT INTO products(product_name, product_description, product_price, product_category) 
-        VALUES ($1, $2, $3, $4) RETURNING *;`,
+    console.log("here?")
+    const stats = await Review.findAll({
+     
+      attributes: [
         [
-          req.body.product_name,
-          req.body.product_description,
-          req.body.product_price,
-          req.body.product_category,
-        ]
-      )
-      res.send(result.rows[0])
-    } else {
-      next(
-        createHttpError(400, "Some errors occured in request body!", {
-          errorsList,
-        })
-      )
-    }
+          sequelize.cast(
+            // cast function converts datatype
+            sequelize.fn("count", sequelize.col("product_product_id")), // SELECT COUNT(blog_id) AS total_comments
+            "integer"
+          ),
+          "numberOfReviews",
+        ],
+      ],
+      group: ["product_product_id","product.product_id"],
+      include: [ {model:Product,attributes:["productName"],include:[{model:Review,attributes:["comment"]}]}], // <-- nested include
+    });
+    res.send(stats);
   } catch (error) {
-    next(error)
+    res.status(500).send({ message: error.message });
+  }
+});
+
+
+productsRouter.post("/", async (req, res, next) => {
+  try {
+    const newProduct = await Product.create(req.body)
+    if (req.body.categories) {
+      for await (const categoryName of req.body.categories) {
+        const category = await Category.create({ name: categoryName });
+        await newProduct.addCategory(category, {
+          through: { selfGranted: false },
+        });
+      }
+    }
+
+    const productWithCategory = await Product.findOne({
+      where: { productId: newProduct.productId },
+      include: [Category, Review],
+    });
+
+    res.send(productWithCategory)
+  } catch (error) {
+    res.status(500).send({ message: error.message })
   }
 })
 
-productsRouter.put("/:productId", async (req, res, next) => {
+productsRouter.put("/:id", async (req, res, next) => {
   try {
-    const errorsList = validationResult(req)
-    if (errorsList.isEmpty()) {
-      const result = await pool.query(
-        `UPDATE products SET product_name=$1, product_description=$2, product_price=$3, product_category=$4 
-       WHERE product_id=$5
-       RETURNING *;`,
-        [
-          req.body.product_name,
-          req.body.product_description,
-          req.body.product_price,
-          req.body.product_category,
-          req.params.productId,
-        ]
-      )
-      res.send(result.rows[0])
+    const [success, updateProduct] = await Product.update(req.body, {
+      where: { productId: req.params.id },
+      returning: true,
+    })
+    if (success) {
+      res.send(updateProduct)
     } else {
-      next(
-        createHttpError(400, "Some errors occured in request body!", {
-          errorsList,
-        })
-      )
+      res.status(404).send({ message: "no such product" })
     }
   } catch (error) {
-    next(error)
+    res.status(500).send({ message: error.message })
   }
 })
-
-productsRouter.delete("/:productId", async (req, res, next) => {
+productsRouter.get("/:id", async (req, res, next) => {
   try {
-    await pool.query(`DELETE FROM products WHERE product_id=$1;`, [
-      req.params.productId,
-    ])
+    const singleProduct = await Product.findByPk(req.params.id)
+    if (singleProduct) {
+      res.send(singleProduct)
+    } else {
+      res.status(404).send({ error: "No such product" })
+    }
+  } catch (error) {
+    res.status(500).send({ error: error.message })
+  }
+})
+productsRouter.delete("/:id", async (req, res, next) => {
+  try {
+    await Product.destroy({
+      where: {
+        productId: req.params.id,
+      },
+    })
     res.status(204).send()
   } catch (error) {
-    next(error)
+    res.status(500).send({ message: error.message })
   }
 })
 
-//Image post
-productsRouter.post(
-  "/:productsId/uploadImageUrl",
-  multer().single("imageUrl"),
-  async (req, res, next) => {
-    // "imageUrl" does need to match exactly to the name used in FormData field in the frontend, otherwise Multer is not going to be able to find the file in the req.body
-    try {
-      console.log("FILE: ", req.file)
-      await saveProductsImageUrl(req.file.originalname, req.file.buffer)
-      const productId = req.params.productsId
 
-      const productsArray = await getProducts()
-
-      const index = productsArray.findIndex(
-        (product) => product._id === productId
-      )
-
-      const oldProduct = productsArray[index]
-
-      const updatedProduct = {
-        ...oldProduct,
-        imageUrl: "http://localhost:3001/img/products/" + req.file.originalname,
-        updatedAt: new Date(),
-      }
-
-      productsArray[index] = updatedProduct
-
-      await writeProducts(productsArray)
-
-      res.send("Ok")
-    } catch (error) {
-      next(error)
-    }
-  }
-)
-
-productsRouter.get("/:productId/reviews", async (req, res, next) => {
-  try {
-    const productId = req.params.productId
-
-    const result = await pool.query(
-      `SELECT * FROM reviews 
-      WHERE product_id=$1`,
-      [productId]
-    )
-
-    res.send(result.rows)
-  } catch (error) {
-    next(error)
-  }
-})
+  
 
 export default productsRouter

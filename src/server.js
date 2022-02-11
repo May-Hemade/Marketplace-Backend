@@ -1,39 +1,30 @@
-import express from "express";
-import listEndpoints from "express-list-endpoints";
-import productsRouter from "./services/products/index.js";
-import {
-  badRequestHandler,
-  unauthorizedHandler,
-  notFoundHandler,
-  genericErrorHandler,
-} from "./errorHandlers.js";
-import cors from "cors";
-import { join } from "path";
-import reviewsRouter from "./services/reviews/index.js";
+import express from "express"
 
-const server = express();
+import productsRouter from "./services/products/index.js"
+import usersRouter from "./services/users/index.js"
 
-const port = 3001;
+import reviewsRouter from "./services/reviews/index.js"
+import { authenticateDatabase } from "./utils/db/connect.js"
 
-const publicFolderPath = join(process.cwd(), "public");
+import "./services/products/model.js"
+import categoryRouter from "./services/categories/index.js"
 
+const server = express()
 
-server.use(express.json());
-server.use(cors());
+const { PORT = 3001 } = process.env
 
-server.use(express.static(publicFolderPath));
-//ENDPOINTS
+server.use(express.json())
 
-server.use("/products", productsRouter);
-server.use("/reviews", reviewsRouter);
+server.use("/products", productsRouter)
+server.use("/reviews", reviewsRouter)
+server.use("/users", usersRouter)
+server.use("/categories", categoryRouter)
 
-server.use(badRequestHandler);
-server.use(unauthorizedHandler);
-server.use(notFoundHandler);
-server.use(genericErrorHandler);
+server.listen(PORT, () => {
+  authenticateDatabase()
+  console.log(`Server is listening on port ${PORT}`)
+})
 
-console.table(listEndpoints(server));
-
-server.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
+server.on("error", (error) => {
+  console.log(`Server is stopped : ${error}`)
+})
